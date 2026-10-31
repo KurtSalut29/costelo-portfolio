@@ -1,26 +1,418 @@
 @import "tailwindcss";
 
+/*
+  Palette from Charmae's light mode concept:
+  Royal Blue #233B78 (headings and navigation), Vanilla Cream #FFFDF8 (main background),
+  Ice Lavender #DCE8FF (section backgrounds), Royal Periwinkle #6485E8 (buttons and
+  highlights), Rose Blush #F6DDE5 (cards and accents).
+
+  Periwinkle is too light for small text or for white text on top of it (about 3.5:1),
+  so --c-accent / --c-btn use the same hue one step deeper (#4A67D3, 4.7:1 on cream and
+  under white). The original #6485E8 stays for brackets, lines and other decoration.
+
+  Theme tokens: light values on :root, dark values under [data-theme="dark"].
+*/
+@custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
+
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  color-scheme: light;
+  --c-page: #fffdf8;
+  --c-surface: #ffffff;
+  --c-lavender: #dce8ff;
+  --c-rose: #f6dde5;
+  --c-ink: #233b78;
+  --c-text: #4a5170;
+  --c-muted: #6b7190;
+  --c-line: #e3e6f2;
+  --c-peri: #6485e8;
+  --c-accent: #4a67d3;
+  --c-btn: #4a67d3;
+  --c-btn-hover: #233b78;
+  --c-btn-text: #ffffff;
+  --c-royal: #233b78;
+  --c-bezel: #141a33;
+}
+
+[data-theme="dark"] {
+  color-scheme: dark;
+  --c-page: #0c1124;
+  --c-surface: #131a33;
+  --c-lavender: #10172e;
+  --c-rose: #2b2140;
+  --c-ink: #e8ecff;
+  --c-text: #aeb6d3;
+  --c-muted: #8d95b5;
+  --c-line: #232c4c;
+  --c-peri: #8aa3f4;
+  --c-accent: #9fb3f7;
+  --c-btn: #8aa3f4;
+  --c-btn-hover: #b3c3fa;
+  --c-btn-text: #0c1124;
+  --c-royal: #1a2552;
+  --c-bezel: #05070f;
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-page: var(--c-page);
+  --color-surface: var(--c-surface);
+  --color-lavender: var(--c-lavender);
+  --color-rose: var(--c-rose);
+  --color-ink: var(--c-ink);
+  --color-text: var(--c-text);
+  --color-muted: var(--c-muted);
+  --color-line: var(--c-line);
+  --color-peri: var(--c-peri);
+  --color-accent: var(--c-accent);
+  --color-btn: var(--c-btn);
+  --color-btn-hover: var(--c-btn-hover);
+  --color-btn-text: var(--c-btn-text);
+  --color-royal: var(--c-royal);
+  --color-bezel: var(--c-bezel);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+@theme {
+  --font-display: var(--font-sora);
+  --font-sans: var(--font-onest);
+  --font-mono: var(--font-dm-mono);
+
+  --ease-lens: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+    scroll-padding-top: 1.25rem;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  body {
+    background: var(--c-page);
+    color: var(--c-text);
+    font-family: var(--font-sans), system-ui, sans-serif;
+    text-rendering: optimizeLegibility;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4 {
+    color: var(--c-ink);
+    font-family: var(--font-display), system-ui, sans-serif;
+    text-wrap: balance;
+  }
+
+  p {
+    text-wrap: pretty;
+  }
+
+  ::selection {
+    background: var(--c-rose);
+    color: var(--c-ink);
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--c-peri);
+    outline-offset: 3px;
+    border-radius: 6px;
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+/* Large screens: leave room for the fixed navbar when jumping to a section. */
+@media (min-width: 64rem) {
+  html {
+    scroll-padding-top: 6.5rem;
+  }
+}
+
+/* Lock page scroll while a viewer is open. */
+html:has(dialog[open]) {
+  overflow: hidden;
+}
+
+@page {
+  size: A4;
+  margin: 14mm 16mm;
+}
+
+/* Hide scrollbars on swipe rows; they still scroll by touch, trackpad and keyboard. */
+.no-scrollbar {
+  scrollbar-width: none;
+}
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+/*
+  Frosted glass for the floating navbar and phone tab bar: a translucent surface that
+  blurs and brightens whatever scrolls underneath, a hairline light border, and a soft
+  highlight along the top edge. It lifts with a deeper shadow once the page scrolls.
+*/
+.glass {
+  background: color-mix(in srgb, var(--c-surface) 55%, transparent);
+  border: 1px solid rgb(255 255 255 / 0.65);
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.7),
+    0 10px 30px -18px rgb(35 59 120 / 0.35);
+  -webkit-backdrop-filter: blur(18px) saturate(1.7);
+  backdrop-filter: blur(18px) saturate(1.7);
+}
+
+.glass[data-scrolled="true"] {
+  background: color-mix(in srgb, var(--c-surface) 62%, transparent);
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.7),
+    0 22px 44px -22px rgb(35 59 120 / 0.5);
+}
+
+[data-theme="dark"] .glass {
+  background: color-mix(in srgb, var(--c-surface) 52%, transparent);
+  border-color: rgb(255 255 255 / 0.1);
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.07),
+    0 22px 44px -22px rgb(0 0 0 / 0.7);
+}
+
+/*
+  Viewfinder brackets: four camera-style corners drawn on one element. Size the element
+  to the area to frame; tune with --arm (corner length), --bw (thickness), --bc (color).
+*/
+.brackets {
+  --arm: 16px;
+  --bw: 2px;
+  --bc: var(--c-peri);
+  pointer-events: none;
+  background:
+    linear-gradient(var(--bc), var(--bc)) top left / var(--arm) var(--bw),
+    linear-gradient(var(--bc), var(--bc)) top left / var(--bw) var(--arm),
+    linear-gradient(var(--bc), var(--bc)) top right / var(--arm) var(--bw),
+    linear-gradient(var(--bc), var(--bc)) top right / var(--bw) var(--arm),
+    linear-gradient(var(--bc), var(--bc)) bottom left / var(--arm) var(--bw),
+    linear-gradient(var(--bc), var(--bc)) bottom left / var(--bw) var(--arm),
+    linear-gradient(var(--bc), var(--bc)) bottom right / var(--arm) var(--bw),
+    linear-gradient(var(--bc), var(--bc)) bottom right / var(--bw) var(--arm);
+  background-repeat: no-repeat;
+}
+
+/*
+  Theme switch: "rack focus". With View Transitions the old theme blurs out while the new
+  one sharpens in (animated from theme.ts); otherwise colors crossfade.
+*/
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation: none;
+  mix-blend-mode: normal;
+}
+
+.theme-fade,
+.theme-fade *,
+.theme-fade *::before,
+.theme-fade *::after {
+  transition:
+    background-color 0.45s ease,
+    border-color 0.45s ease,
+    color 0.45s ease,
+    fill 0.45s ease !important;
+}
+
+/* Image viewer: a sheet rising from the bottom on phones, a centered panel from sm up. */
+.viewer {
+  opacity: 0;
+  translate: 0 32px;
+  scale: 0.98;
+  transition:
+    opacity 0.35s var(--ease-lens),
+    translate 0.5s var(--ease-lens),
+    scale 0.5s var(--ease-lens),
+    overlay 0.5s allow-discrete,
+    display 0.5s allow-discrete;
+}
+
+.viewer[open] {
+  opacity: 1;
+  translate: 0 0;
+  scale: 1;
+}
+
+@starting-style {
+  .viewer[open] {
+    opacity: 0;
+    translate: 0 32px;
+    scale: 0.98;
+  }
+}
+
+.viewer::backdrop {
+  background: rgb(12 17 36 / 0);
+  backdrop-filter: blur(0);
+  transition:
+    background-color 0.35s,
+    backdrop-filter 0.35s,
+    overlay 0.5s allow-discrete,
+    display 0.5s allow-discrete;
+}
+
+.viewer[open]::backdrop {
+  background: rgb(12 17 36 / 0.62);
+  backdrop-filter: blur(6px);
+}
+
+@starting-style {
+  .viewer[open]::backdrop {
+    background: rgb(12 17 36 / 0);
+    backdrop-filter: blur(0);
+  }
+}
+
+/* ───────────── Page-load sequence ───────────── */
+
+/* Content comes into focus: from soft and slightly low to sharp. */
+@keyframes focus-in {
+  from {
+    opacity: 0;
+    filter: blur(8px);
+    translate: 0 14px;
+  }
+  to {
+    opacity: 1;
+    filter: blur(0);
+    translate: 0 0;
+  }
+}
+
+.load {
+  animation: focus-in 0.9s var(--ease-lens) both;
+  animation-delay: calc(var(--i, 0) * 110ms + 120ms);
+}
+
+/* Portrait brackets start wide and lock onto the photo, like autofocus. */
+@keyframes lock-on {
+  0% {
+    opacity: 0;
+    inset: -34px;
+  }
+  60% {
+    opacity: 1;
+    inset: -8px;
+  }
+  80% {
+    inset: -16px;
+  }
+  100% {
+    opacity: 1;
+    inset: -14px;
+  }
+}
+
+.lock-on {
+  inset: -14px;
+  animation: lock-on 1.1s var(--ease-lens) 0.45s both;
+}
+
+/* One scan line sweeps down the photo after the lock. */
+@keyframes scan {
+  0% {
+    opacity: 0;
+    top: 0%;
+  }
+  12% {
+    opacity: 1;
+  }
+  88% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    top: 100%;
+  }
+}
+
+.scan-line {
+  opacity: 0;
+  animation: scan 1.5s cubic-bezier(0.45, 0, 0.25, 1) 1.25s both;
+}
+
+/* The tag pinned to the frame appears last. */
+.tag-in {
+  animation: focus-in 0.7s var(--ease-lens) 2.3s both;
+}
+
+/* ───────────── Scroll reveals ───────────── */
+
+/*
+  Elements with data-reveal start out of focus and sharpen when they scroll into view
+  (reveal-observer.tsx sets data-shown). Only with JS, so content never stays hidden.
+  --d sets a stagger delay in ms.
+*/
+.js [data-reveal] {
+  opacity: 0;
+  filter: blur(8px);
+  translate: 0 18px;
+  transition:
+    opacity 0.8s var(--ease-lens),
+    filter 0.8s var(--ease-lens),
+    translate 0.9s var(--ease-lens);
+  transition-delay: calc(var(--d, 0) * 1ms);
+}
+
+.js [data-reveal="frame"] {
+  translate: 0 0;
+  scale: 1.04;
+  transition:
+    opacity 0.8s var(--ease-lens),
+    filter 0.9s var(--ease-lens),
+    scale 1.1s var(--ease-lens);
+  transition-delay: calc(var(--d, 0) * 1ms);
+}
+
+.js [data-reveal][data-shown] {
+  opacity: 1;
+  filter: blur(0);
+  translate: 0 0;
+  scale: 1;
+}
+
+/* Section eyebrow: its brackets close in on the label once revealed. */
+.eyebrow-frame {
+  inset: -5px -14px;
+  opacity: 0;
+  transition:
+    inset 0.8s var(--ease-lens) 0.25s,
+    opacity 0.5s ease 0.25s;
+}
+
+[data-shown] .eyebrow-frame,
+html:not(.js) .eyebrow-frame {
+  inset: -5px -10px;
+  opacity: 1;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  .js [data-reveal] {
+    opacity: 1 !important;
+    filter: none !important;
+    translate: none !important;
+    scale: none !important;
+  }
+
+  .eyebrow-frame {
+    inset: -5px -10px;
+    opacity: 1;
+  }
+
+  .scan-line {
+    display: none;
+  }
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-delay: 0ms !important;
+    transition-duration: 0.01ms !important;
+    transition-delay: 0ms !important;
+  }
 }
